@@ -12,11 +12,11 @@ env-down:
 
 
 env-cleanup:
-	read -p "Clear all environment volume files? Risk of memory loss. [y/N]: " ans; \
-	if [ "$$ans" = "y"  ]; then \ 
-		docker compose down todo-app-posgres && \
+	@read -p "Clear all environment volume files? Risk of memory loss. [y/N]: " ans; \
+	if [ "$$ans" = "y"  ]; then \
+		docker compose down todoapp-postgres && \
 		rm -rf out/pgdata && \
 		echo "Enviroment files cleared"; \
 	else \
-		echo "Enviroment clearing cancelled"
+		echo "Enviroment clearing cancelled"; \
 	fi
