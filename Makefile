@@ -61,4 +61,7 @@ migrate-action:
 		"$(action)"
 
 
+todoapp-run:
+	@go run cmd/todoapp/main.go
+
 
