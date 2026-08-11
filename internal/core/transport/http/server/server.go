@@ -1,0 +1,72 @@
+package core_http_server
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+
+	core_logger "github.com/Crysta1l/go-tdApp/internal/core/logger"
+	"go.uber.org/zap"
+)
+
+type HTTPServer struct {
+	mux    *http.ServeMux
+	config Config
+	log    *core_logger.Logger
+}
+
+func NewHTTPServer(config Config, log *core_logger.Logger) *HTTPServer {
+	return &HTTPServer{
+		mux:    http.NewServeMux(),
+		config: config,
+		log:    log,
+	}
+}
+
+func (h *HTTPServer) Run(ctx context.Context) error {
+	server := &http.Server{
+		Addr:    h.config.Addr,
+		Handler: h.mux,
+	}
+
+	ch := make(chan error, 1)
+
+	go func() {
+		defer close(ch)
+
+		h.log.Warn("Start HTTP server", zap.String("addr", h.config.Addr))
+
+		err := server.ListenAndServe()
+
+		if !errors.Is(err, http.ErrServerClosed) {
+			ch <- err
+		}
+	}()
+
+	select {
+	case err := <-ch:
+		if err != nil {
+			return fmt.Errorf("Listen and server %w", err)
+		}
+	case <-ctx.Done():
+		h.log.Warn("Shutdown HTTP server...")
+
+		shutdownCtx, cancel := context.WithTimeout(
+			context.Background(),
+			h.config.ShutdownTimeout,
+		)
+
+		defer cancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			_ = server.Close()
+
+			return fmt.Errorf("Shutdown HTTP server %w", err)
+		}
+
+		h.log.Warn("HTTP server stopped")
+	}
+	return nil
+
+}

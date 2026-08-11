@@ -3,6 +3,7 @@ package core_http_middleware
 import (
 	"context"
 	"net/http"
+	"time"
 
 	core_logger "github.com/Crysta1l/go-tdApp/internal/core/logger"
 	core_http_response "github.com/Crysta1l/go-tdApp/internal/core/transport/http/response"
@@ -61,6 +62,31 @@ func Panic() Middleware {
 			}()
 
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func Trace() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			log := core_logger.FromContext(ctx)
+			rw := core_http_response.NewResponseWriter(w)
+
+			before := time.Now()
+
+			log.Debug(
+				">>> Incoming HTTP request >>> ",
+				zap.Time("Time", before.UTC()),
+			)
+
+			next.ServeHTTP(rw, r)
+
+			log.Debug(
+				"<<< HTTP request done <<< ",
+				zap.Int("Status code", rw.GetStatusCodeOrPanic()),
+				zap.Duration("Latency", time.Since(before)),
+			)
 		})
 	}
 }
