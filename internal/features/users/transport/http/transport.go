@@ -19,12 +19,13 @@ func NewUsersHTTPHandler(usersService UsersService) *UsersHTTPHandler {
 	}
 }
 
+// Fixed err with handleFunc
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 	return []core_http_server.Route{
 		{
 			Method:  http.MethodPost,
 			Path:    "/users",
-			Handler: h.CreateUser,
+			Handler: http.HandlerFunc(h.CreateUser),
 		},
 	}
 }
