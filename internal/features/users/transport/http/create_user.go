@@ -1,11 +1,12 @@
 package users_transport_http
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/Crysta1l/go-tdApp/internal/core/domain"
 	core_logger "github.com/Crysta1l/go-tdApp/internal/core/logger"
 	core_http_request "github.com/Crysta1l/go-tdApp/internal/core/transport/http/request"
+	core_http_response "github.com/Crysta1l/go-tdApp/internal/core/transport/http/response"
 )
 
 type CreateUserRequest struct {
@@ -23,13 +24,38 @@ type CreateUserResponse struct {
 func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
-
+	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 	log.Debug("Invoke CreateUser handler")
 
 	var request CreateUserRequest
 	if err := core_http_request.DecodeAndValidate(r, &request); err != nil {
-		fmt.Errorf("Create user %w", err)
+		responseHandler.ErrorResponse(err, "Failed to decode and validate HTTP request")
+		return
 	}
 
-	rw.WriteHeader(http.StatusOK)
+	userDomain := domainFromDTO(request)
+
+	userDomain, err := h.usersService.CreateUser(ctx, userDomain)
+
+	if err != nil {
+		responseHandler.ErrorResponse(err, "failed to create user")
+		return
+	}
+
+	response := dtoFromDomain(userDomain)
+
+	responseHandler.JsonResposne(response, http.StatusCreated)
+}
+
+func domainFromDTO(dto CreateUserRequest) domain.User {
+	return domain.NewUserUnitialized(dto.FullName, dto.PhoneNumber)
+}
+
+func dtoFromDomain(user domain.User) CreateUserResponse {
+	return CreateUserResponse{
+		ID:          user.ID,
+		Version:     user.Version,
+		FullName:    user.FullName,
+		PhoneNumber: user.PhoneNumber,
+	}
 }

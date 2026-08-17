@@ -23,6 +23,17 @@ func NewHTTPResponseHandler(log *core_logger.Logger, rw http.ResponseWriter) *HT
 	}
 }
 
+func (h *HTTPResponseHandler) JsonResposne(
+	responseBody any,
+	statusCode int,
+) {
+	h.rw.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(h.rw).Encode(responseBody); err != nil {
+		h.log.Error("Write HTTP response", zap.Error(err))
+	}
+}
+
 func (h *HTTPResponseHandler) ErrorResponse(err error, msg string) {
 	var (
 		statusCode int
@@ -63,15 +74,12 @@ func (h HTTPResponseHandler) errorResponse(
 	err error,
 	msg string,
 ) {
-	h.rw.WriteHeader(statusCode)
 
 	response := map[string]string{
 		"message": msg,
 		"error":   err.Error(),
 	}
 
-	if err := json.NewEncoder(h.rw).Encode(response); err != nil {
-		h.log.Error("Write HTTP response", zap.Error(err))
-	}
+	h.JsonResposne(response, statusCode)
 
 }
