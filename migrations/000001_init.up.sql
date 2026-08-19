@@ -7,7 +7,7 @@ CREATE TABLE todoapp.users(
     phone_number    VARCHAR(15)                    CHECK(
         phone_number ~ '^\+[0-9]+$'
         AND
-        char_length(full_name) BETWEEN 10 AND 15
+        char_length( phone_number) BETWEEN 10 AND 15
     )
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE todoapp.tasks(
     id              SERIAL                      PRIMARY KEY,
     version         VARCHAR(100)    NOT NULL    DEFAULT 1,
     title           VARCHAR(100)    NOT NULL    CHECK(char_length(title) BETWEEN 1 AND 100),
-    description     VARCHAR(1000)               CHECK(char_length(title) BETWEEN 1 AND 1000),
+    description     VARCHAR(1000)               CHECK(char_length(description) BETWEEN 1 AND 1000),
     completed       BOOLEAN         NOT NULL,
     created_at      TIMESTAMPTZ     NOT NULL,
     completed_at    TIMESTAMPTZ
